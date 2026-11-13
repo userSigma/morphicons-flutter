@@ -1,39 +1,38 @@
-# Library checks on every push/PR. Runs unconditionally (no paths filter):
-# "checks" is a required status check on main, and a filtered-out run would
-# leave PRs stuck waiting for it. Actions are pinned by SHA (supply-chain
-# hygiene); Dependabot keeps the pins fresh.
+# Keep the required "checks" status on every PR, including documentation edits.
 name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'feature/**']
   pull_request:
 
 permissions:
-  contents: read # checkout only; nothing here writes back
+  contents: read
 
 jobs:
   checks:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-
-      - name: Install
-        run: bun install --frozen-lockfile
-
-      - name: Lint (biome)
-        run: bun run lint
-
-      - name: Typecheck (strict ×7)
-        run: bun run typecheck
-
-      - name: Test
-        run: bun test
-
-      - name: Build
-        run: bun run build
-
-      - name: Size gates
-        run: bun run size
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          channel: stable
+          flutter-version: '3.47.7'
+          cache: true
+      - name: Install package and example
+        run: |
+          flutter pub get
+          cd example
+          flutter pub get
+      - name: Format
+        run: dart format --output=none --set-exit-if-changed lib test/core test/flutter example/lib example/test
+      - name: Analyze
+        run: flutter analyze --no-pub
+      - name: Package tests
+        run: flutter test --no-pub --coverage
+      - name: Example tests
+        working-directory: example
+        run: flutter test --no-pub
+      - name: Web release build
+        working-directory: example
+        run: flutter build web --release --no-pub

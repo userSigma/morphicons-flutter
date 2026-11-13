@@ -1,157 +1,125 @@
-<p align="center">
-  <a href="https://www.morphicons.com">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.svg">
-      <img src="assets/logo-light.svg" alt="morphicons" width="96">
-    </picture>
-  </a>
-</p>
+# morphicons · Flutter
 
-<h1 align="center">morphicons</h1>
+Native, interruptible morphing between **any stroked or filled SVG icons**. Pure Dart geometry, Flutter `CustomPainter`, emergent rotations and spring physics. No JavaScript bridge, WebView, SVG rendering package, or third-party runtime dependencies.
 
-<p align="center">
-  <a href="https://www.morphicons.com"><strong>morphicons.com</strong></a> — live playground
-</p>
-
-<p align="center">
-  <a href="https://github.com/sponsors/guillermolg00">
-    <img src="https://img.shields.io/badge/%E2%98%95%20Buy%20me%20a%20coffee-EA4AAA" alt="Buy me a coffee — sponsor morphicons on GitHub Sponsors">
-  </a>
-</p>
-
-<p align="center">
-  <img src="assets/morphicons-states.gif" alt="Three icons changing state in sequence: play to pause, sun to a filled moon, an outlined heart to a filled one, each one's color following its shape" width="720">
-</p>
-
-Morph any SVG icon into any other, stroked or filled, with spring physics. Lucide, Tabler, Heroicons, Material Symbols, Phosphor or your own paths. Zero runtime dependencies.
-
-```tsx
-import { MorphIcon } from "morphicons/react";
-import { Menu, X } from "lucide"; // icon data, not components
-
-<MorphIcon icon={open ? X : Menu} />
-```
-
-Change the prop and the icon morphs. Nothing to configure.
+This branch migrates morphicons 2.0.2 to a Flutter package. The original TypeScript sources, bindings and website remain as references; the previous API is preserved in [the TypeScript reference](docs/typescript-reference.md). The Flutter implementation lives in `lib/` and the runnable motion lab in `example/`.
 
 ## Install
 
-```bash
-npm install morphicons
+Requires Flutter ≥ 3.19 and Dart ≥ 3.3. Add the local checkout to your Flutter app:
+
+```yaml
+dependencies:
+  flutter:
+    sdk: flutter
+  morphicons:
+    path: ../morphicons-flutter
 ```
 
-Icons are **data**: an `IconNode` (Lucide's format) or a `d` string. For Lucide, import from `lucide`, not `lucide-react`.
-
-| entry | |
-|---|---|
-| `morphicons/react` · `vue` · `svelte` · `react-native` | `<MorphIcon>` (the framework peer is optional) |
-| `morphicons/astro` · `element` | Astro component · `<morph-icon>` for plain HTML |
-| `morphicons/dom` | `createMorph()`, no framework |
-| `morphicons/adapters` | `svgToIcon`, `maskTarget`, `canvasTarget` |
-| `morphicons` | the pure core, no DOM |
+The package is currently a local development package (`publish_to: none`). Android, iOS, Web, Windows, macOS and Linux example runners are included. Native builds require each platform's normal Flutter toolchain.
 
 ## Usage
 
-Three modes, the same in every binding:
+```dart
+import 'package:morphicons/morphicons.dart';
 
-```tsx
-<MorphIcon icon={open ? X : Menu} />             // 1. change the prop: it animates
-<MorphIcon from={Menu} to={X} progress={0.4} />  // 2. you drive the progress
-<MorphIcon ref={ref} icon={Menu} />              // 3. ref.current.morphTo(X), or set(X) to jump
+const menu = 'M4 6h16M4 12h16M4 18h16';
+const close = 'M18 6 6 18M6 6l12 12';
+
+// Change icon with your widget's state; the first icon mounts at rest.
+MorphIcon(
+  icon: isOpen ? close : menu,
+  size: 28,
+  color: Colors.teal,
+  spring: SpringConfig.snappy,
+  label: isOpen ? 'Close menu' : 'Open menu',
+)
 ```
 
-| prop | |
-|---|---|
-| `size`, `color`, `strokeWidth`, `absoluteStrokeWidth` | as in lucide-react; other `<svg>` attributes pass through |
-| `spring` | `"snappy"` (default), `"smooth"`, `"bouncy"` or `{ stiffness, damping }` |
-| `reducedMotion` | `"never"` (default), `"user"` (follow the OS) or `"always"` |
-| `label` | accessible name; without it the icon is `aria-hidden` |
+A raw SVG `d` string is stroked. For icon packs or filled/mixed artwork, pass immutable node data. Accepted tags: `path`, `line`, `polyline`, `polygon`, `rect`, `circle`, `ellipse`.
 
-SSR renders the final SVG, so nothing flashes on hydration.
+```dart
+const filledCircle = [
+  IconNode('circle', {
+    'cx': 12, 'cy': 12, 'r': 9, 'fill': 'currentColor',
+  }),
+];
 
-### Lifecycle contract
-
-- Mounting without an icon is fine; the first one appears without animating.
-- While `from` and `to` are set, they win over `icon`.
-- Leaving controlled mode and coming back renders like a fresh mount.
-
-### Other frameworks
-
-```vue
-<MorphIcon :icon="open ? X : Menu" />   <!-- Vue 3 -->
+MorphIcon(icon: filledCircle, color: Colors.teal)
 ```
 
-```svelte
-<MorphIcon icon={open ? X : Menu} />    <!-- Svelte 5 -->
+Geometry is monochrome: `color` paints the icon; source fill/stroke values determine the visible surface rather than retaining separate colors. The default coordinate grid is 24 × 24. Use `fitIcon(icon, '0 0 512 512')` for off-grid artwork.
+
+### Controlled progress
+
+```dart
+MorphIcon(from: menu, to: close, progress: dragProgress)
 ```
 
-React Native has the React API (it needs Metro with package `exports`, the default since 0.79). Astro renders the SVG on the server and upgrades it to a `<morph-icon>` element in the browser. In plain HTML, use the element directly:
+`progress` must be finite and in `[0, 1]`; scrubbing is deterministic. With both `from` and `to`, the pair takes precedence over `icon`. Leaving controlled mode hands the current geometry back to `icon`; re-entering starts from the explicit `from` again.
 
-```html
-<script type="module">
-  import { defineMorphIcon } from "morphicons/element";
-  defineMorphIcon();
-</script>
+### Imperative control
 
-<morph-icon icon="M4 6h16M4 12h16M4 18h16" label="Menu"></morph-icon>
+```dart
+final morph = MorphController(icon: menu);
+
+// Put this in build. Dispose morph from your State.dispose().
+MorphIcon(controller: morph, color: Colors.teal)
+
+morph.morphTo(close);                 // carries velocity through interruptions
+morph.set(menu);                      // exact canonical shape, no animation
+morph.seek(close, 0.5, from: menu);    // frozen, deterministic progress
+morph.progress = 0.75;               // scrubs the active pair
 ```
 
-Without a framework:
+An iconless controller is lazy: its first `set`, `morphTo`, prop or controlled pair establishes the initial shape without a flight. `MorphIcon` owns and disposes its internal controller; an external controller stays caller-owned. The widget advances its controller through a Flutter ticker only while flying. A standalone controller can be clocked explicitly with `advance(Duration)`.
 
-```ts
-import { createMorph } from "morphicons/dom";
+`MorphController` is a `Listenable`; inspect `d`, `progress`, `velocity`, `paint`, and `isAnimating`. A raw string snaps back to its **verbatim** `d` at rest. Mid-flight interruption preserves the currently displayed shape, including a zero-time next frame.
 
-const m = createMorph(pathEl, Menu); // an SVG <path>
-m.morphTo(X);
+### Rendering and accessibility
+
+- `size: 24`, `strokeWidth: 2`, round caps and joins; color follows `IconTheme` unless specified.
+- `absoluteStrokeWidth: true` keeps stroke thickness in logical pixels while resizing.
+- `label` creates image semantics. Without it the icon is decorative.
+- `reducedMotion: ReducedMotion.never` (default), `.user` (follows `MediaQuery.disableAnimations`) or `.always` (jumps to target). Policy changes apply to the same update as the icon.
+- `spring`: `SpringConfig.smooth`, `.snappy`, `.bouncy`, or `SpringConfig(stiffness: 250, damping: 24)`.
+- `TickerMode` pauses hidden animations. Painting uses isolated repaints, not a widget rebuild per animation frame.
+
+### SVG markup adapter
+
+```dart
+import 'package:morphicons/adapters.dart';
+
+final icon = svgToIcon(svgMarkup);
 ```
 
-## Fill icons
+The opt-in adapter extracts geometry, inherited paint, inline paint styles and nested transforms, and fits the SVG viewBox to the 24-grid. It skips definitions and hidden nodes. It is a geometry importer, not a full SVG/CSS engine: text, images, masks, filters, `<use>` references and CSS stylesheets are not rendered. Unsupported paint such as gradients produces an error instead of a misleading approximation. Never call it on every animation frame.
 
-When either icon is filled, both morph as filled shapes. The code for that (5.4 KB gzip) loads the first time a filled icon shows up; stroke-only apps never download it. To bundle it instead:
+## Core and regions
 
-```ts
-import { setRegionLoader } from "morphicons/dom";
-import * as region from "morphicons/region";
+`package:morphicons/core.dart` exposes the Flutter-independent pipeline: `iconToCubics` → `resampleIcon` → `buildPlan` → `allocOutputs` / `interpPolar` → `serialize`, plus `Spring`. It imports neither Flutter nor `dart:ui`.
 
-setRegionLoader(async () => region);
-```
+The port preserves SVG elliptical arc normalization (F.6), GL8 arc-length sampling, exact anchored corners, intrinsic closed-path sampling, surjective subpath matching, Procrustes fitting with the minimal-rotation tie-break, circular correspondence, and coherent global block transport. Endpoints are exact; unequal subpath counts duplicate rather than collapse.
 
-Or call `preloadRegion()` early to fetch it before the first morph. For long lists of filled icons on low-end devices, run `toRegion(icon)` from `morphicons/region` at build time: the driver uses its output as is, with no normalization at runtime.
+`package:morphicons/region.dart` exposes filled/mixed surface normalization and topology-aware planning. Signed-distance fields and marching squares turn visible fills and round strokes into consistently wound contours; holes share their parent's motion and open/close through split residual interpolation. This is synchronous Dart code (not the former asynchronous JS chunk loader).
 
-## Format adapters
+Known inherited geometry limits: translucent paint and evenodd self-intersections are unsupported; sub-cell details are grid approximations, and exactly grid-aligned coincident fill seams may produce tiny extra contours. DOM masks, SSR and framework-specific bindings remain in the TypeScript reference rather than being emulated in Flutter.
 
-- `svgToIcon(markup)`: SVG markup (an Iconify body, a full `<svg>`) to an icon.
-- `maskTarget(el)`: morphs CSS-mask icons in place (UnoCSS, Tailwind icon plugins).
-- `canvasTarget(canvas)`: draws the morph into a canvas or 2D context.
-
-```ts
-createMorph(maskTarget(span), svgToIcon(markup));
-```
-
-`maskTarget` and `canvasTarget` draw strokes only.
-
-## Icon library compatibility
-
-Any set on a 24×24 grid works as is. For other grids, use `fitIcon(icon, 32)` from `morphicons`, or `svgToIcon`, which reads the `viewBox`.
-
-## How it works
-
-For each pair of shapes, morphicons solves the rotation, scale and translation that best map one onto the other, in closed form, and interpolates each separately. Two icons that are the same shape rotated simply rotate. Details in [docs/how-it-works.md](docs/how-it-works.md), decisions in [docs/adr](docs/adr).
-
-## Size
-
-gzip, enforced in CI: core 6.7 KB, `dom` 9.3, `react` 10.2, `vue` 10.3, `svelte` 9.9, `element` 11.1, `react-native` 15.9. The fill code adds 5.4 on first use. Adapters: 0.5–4.2 each.
-
-## Development
+## Run and verify
 
 ```bash
-bun install
-bun test && bun run typecheck && bun run lint
-bun run play   # playground → http://localhost:3000
+flutter pub get
+flutter analyze
+flutter test
+cd example
+flutter pub get
+flutter run -d chrome        # or windows / android / ios / macos / linux
+flutter test
+flutter build web --release
 ```
 
-Playground icons: [Lucide](https://lucide.dev) (ISC), [Feather](https://feathericons.com) (MIT), [Tabler](https://tabler.io/icons) (MIT).
+The motion lab covers menu ↔ close, right ↔ down, plus ↔ close, close ↔ check, circle ↔ square, square ↔ diamond, sun ↔ moon, and filled ring ↔ disc. Scrub at 0.25 / 0.50 / 0.75 and interrupt flights to inspect intermediate geometry.
 
----
+CI analyzes and tests the package and example, checks Dart formatting, and builds the Web example. Legacy npm publication is opt-in through the `ENABLE_LEGACY_NPM_PUBLISH` repository variable; this branch does not publish either package automatically.
 
-MIT © [Guillermo](https://guillermolg.com) — made by [guillermolg.com](https://guillermolg.com)
+See [migration notes](docs/flutter-migration.md), [the algorithm explanations](docs/how-it-works.md), and [the implementation plan](docs/superpowers/plans/2026-11-13-flutter-migration.md). The original MIT license is retained.

@@ -1,0 +1,21 @@
+name: morphicons
+version: 3.0.0-dev.1
+description: Native Flutter icon morphing with emergent rotation, interruptible springs, and filled-region topology.
+homepage: https://www.morphicons.com
+repository: https://github.com/guillermolg00/morphicons
+publish_to: none
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+  flutter: '>=3.19.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true

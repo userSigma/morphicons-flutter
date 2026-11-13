@@ -25,7 +25,8 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    if: github.repository == 'guillermolg00/morphicons'
+    # The Flutter branch keeps legacy sources for reference, not auto-publication.
+    if: github.repository == 'guillermolg00/morphicons' && vars.ENABLE_LEGACY_NPM_PUBLISH == 'true'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
