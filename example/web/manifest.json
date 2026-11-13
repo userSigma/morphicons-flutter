@@ -1,0 +1,35 @@
+{
+    "name": "morphicons — Native motion lab",
+    "short_name": "morphicons",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#101A19",
+    "theme_color": "#101A19",
+    "description": "Native Flutter icon morphing with emergent rotation and interruptible springs.",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}

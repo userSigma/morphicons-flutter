@@ -1,0 +1,21 @@
+name: morphicons_example
+description: Native Flutter morphicons motion laboratory.
+publish_to: none
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+  flutter: '>=3.19.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  morphicons:
+    path: ../
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
