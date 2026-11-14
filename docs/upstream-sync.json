@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "upstream_repository": "guillermolg00/morphicons",
+  "upstream_branch": "main",
+  "reference_commit": "8c3e3c7cd717b2381f8f35cf6c245afd80d8d7df",
+  "ported_commit": "8c3e3c7cd717b2381f8f35cf6c245afd80d8d7df",
+  "pending_commits": []
+}

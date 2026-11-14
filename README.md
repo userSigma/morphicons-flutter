@@ -123,3 +123,7 @@ The motion lab covers menu ↔ close, right ↔ down, plus ↔ close, close ↔ 
 CI analyzes and tests the package and example, checks Dart formatting, and builds the Web example. Legacy npm publication is opt-in through the `ENABLE_LEGACY_NPM_PUBLISH` repository variable; this branch does not publish either package automatically.
 
 See [migration notes](docs/flutter-migration.md), [the algorithm explanations](docs/how-it-works.md), and [the implementation plan](docs/superpowers/plans/2026-11-13-flutter-migration.md). The original MIT license is retained.
+
+## Tracking upstream
+
+`upstream-main` mirrors `guillermolg00/morphicons:main`; `develop` is the Flutter integration/default branch and `main` remains the release branch. Daily synchronization opens a draft PR, preserves upstream history, and requires an explicitly reviewed Dart port before merging. See [the sync workflow and maintainer guide](docs/upstream-sync.md) and [the port baseline ledger](docs/upstream-sync.json).

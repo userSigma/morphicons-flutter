@@ -1,0 +1,34 @@
+name: Upstream sync
+
+on:
+  # 04:17 Asia/Shanghai; scheduled workflows are loaded from the default branch.
+  schedule:
+    - cron: '17 20 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: write
+
+concurrency:
+  group: upstream-sync
+  cancel-in-progress: false
+
+jobs:
+  synchronize:
+    if: github.repository == 'userSigma/morphicons-flutter' && (github.event_name == 'schedule' || github.ref == 'refs/heads/develop')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: develop
+          fetch-depth: 0
+      - name: Configure the fixed upstream remote
+        run: git remote add upstream https://github.com/guillermolg00/morphicons.git
+      - name: Mirror upstream and prepare a draft port PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/upstream_sync.py
