@@ -21,3 +21,7 @@ coverage/
 example/.dart_tool/
 example/build/
 example/pubspec.lock
+
+# Python automation caches
+__pycache__/
+*.py[cod]

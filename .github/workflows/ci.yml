@@ -3,8 +3,9 @@ name: CI
 
 on:
   push:
-    branches: [main, 'feature/**']
+    branches: [main, develop, 'feature/**', 'sync/**']
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -12,8 +13,24 @@ permissions:
 jobs:
   checks:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      UPSTREAM_FIXTURES: .dart_tool/upstream-fixtures.json
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Automation regression tests
+        run: python3 -m unittest discover -s test/automation -p 'test_*.py' -v
+      - name: Require reviewed Dart port baseline
+        run: |
+          git fetch --no-tags origin upstream-main:refs/remotes/origin/upstream-main
+          python3 scripts/check_upstream_port.py
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      - name: Export current TypeScript reference fixtures
+        run: node scripts/export-upstream-fixtures.mjs
       - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
         with:
           channel: stable
@@ -25,7 +42,7 @@ jobs:
           cd example
           flutter pub get
       - name: Format
-        run: dart format --output=none --set-exit-if-changed lib test/core test/flutter example/lib example/test
+        run: dart format --output=none --set-exit-if-changed lib test/core test/flutter test/parity example/lib example/test
       - name: Analyze
         run: flutter analyze --no-pub
       - name: Package tests
